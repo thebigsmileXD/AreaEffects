@@ -22,6 +22,7 @@ class Main extends PluginBase implements Listener{
 
 	public function onEnable(){
 		$this->saveResource("config.yml");
+		$this->getConfig()->reload();
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		$this->getLogger()->info(TextFormat::GREEN . "AreaEffects enabled!");
 	}
