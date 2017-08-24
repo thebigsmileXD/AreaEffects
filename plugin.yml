@@ -1,7 +1,7 @@
 name: AreaEffects
 main: AreaEffects\Main
 version: 1.1.5
-api: [1.13.0, 2.0.0]
+api: ['3.0.0-ALPHA7']
 load: STARTUP
 authors: [Rspuds,thebigsmileXD]
 description: Apply effects in set areas
