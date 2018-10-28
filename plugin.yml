@@ -1,10 +1,8 @@
 ---
 name: AreaEffects
 main: AreaEffects\Main
-version: 1.2.0
-api:
-- 3.0.0-ALPHA9
-- 3.0.0-ALPHA10
+version: 1.2.1
+api: [4.0.0]
 load: STARTUP
 authors:
 - Rspuds
@@ -13,8 +11,7 @@ description: Apply effects in set areas
 commands:
   ae:
     description: All area effects commands
-    usage: /ae create <areaname> <id> [amplifier] [duration] [visible] | /ae list
-      | /ae remove
+    usage: /ae create <areaname> <id> [amplifier] [duration] [visible] | /ae list | /ae remove
     permission: ae.commands.ae
 permissions:
   ae.commands.ae:
