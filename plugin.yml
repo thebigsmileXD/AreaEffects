@@ -11,7 +11,7 @@ description: Apply effects in set areas
 commands:
   ae:
     description: All area effects commands
-    usage: /ae create <areaname> <id> [amplifier] [duration] [visible] | /ae list | /ae remove
+    usage: /ae create <areaname> <id> [amplifier] [duration] [visible] | /ae list | /ae remove <name>
     permission: ae.commands.ae
 permissions:
   ae.commands.ae:
