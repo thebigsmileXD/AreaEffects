@@ -1,35 +1,20 @@
 <?php
 
-namespace AreaEffects;
+namespace xenialdan\AreaEffects;
 
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\entity\Effect;
-use pocketmine\entity\EffectInstance;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
-use pocketmine\plugin\PluginBase;
+use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 
-class Main extends PluginBase implements Listener
+class EventListener implements Listener
 {
-    public $areas;
-    private $pos1, $pos2;
-
-    public function onLoad()
-    {
-        $this->getLogger()->info(TextFormat::GREEN . "AreaEffects has been loaded!");
-    }
-
-    public function onEnable()
-    {
-        $this->saveDefaultConfig();
-        $this->getConfig()->reload();
-        $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        $this->getLogger()->info(TextFormat::GREEN . "AreaEffects enabled!");
-    }
+    private $pos1;
+    private $pos2;
 
     public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
     {
@@ -66,10 +51,10 @@ class Main extends PluginBase implements Listener
                         if ($sender instanceof Player) {
                             if (isset($args[1], $args[2])) {
                                 if (isset($this->pos1, $this->pos2)) {
-                                    if (($id = $this->isEffect($args[2])) !== null) {
-                                        $this->getConfig()->setNested($args[1], array('level' => $sender->getLevel()->getName(), 'pos1' => array('x' => $this->pos1->x, 'y' => $this->pos1->y, 'z' => $this->pos1->z), 'pos2' => array('x' => $this->pos2->x, 'y' => $this->pos2->y, 'z' => $this->pos2->z),
+                                    if (($id = Main::getInstance()->isEffect($args[2])) !== null) {
+                                        Main::getInstance()->getConfig()->setNested($args[1], array('level' => $sender->getLevel()->getName(), 'pos1' => array('x' => $this->pos1->x, 'y' => $this->pos1->y, 'z' => $this->pos1->z), 'pos2' => array('x' => $this->pos2->x, 'y' => $this->pos2->y, 'z' => $this->pos2->z),
                                             'effect' => array('id' => $id, 'duration' => ((isset($args[4]) && is_numeric($args[4])) ? intval($args[4]) : 200), 'amplifier' => ((isset($args[3]) && is_numeric($args[3])) ? intval($args[3]) : 1), 'show' => ((isset($args[5]) && is_bool($args[5])) ? boolval($args[5]) : false))));
-                                        $this->saveConfig();
+                                        Main::getInstance()->saveConfig();
                                         $sender->sendMessage(TextFormat::GREEN . "[AreaEffects]Area created");
                                         return true;
                                     } else {
@@ -89,9 +74,9 @@ class Main extends PluginBase implements Listener
                 case "remove":
                     {
                         if (isset($args[1])) {
-                            $this->getConfig()->remove($args[1]);
-                            $this->getConfig()->save();
-                            if (!$this->getConfig()->exists($args[1])) {
+                            Main::getInstance()->getConfig()->remove($args[1]);
+                            Main::getInstance()->getConfig()->save();
+                            if (!Main::getInstance()->getConfig()->exists($args[1])) {
                                 $sender->sendMessage(TextFormat::GREEN . "[AreaEffects]Area removed");
                                 return true;
                             } else {
@@ -106,7 +91,7 @@ class Main extends PluginBase implements Listener
 
                 case "list":
                     {
-                        $all = array_keys($this->getConfig()->getAll());
+                        $all = array_keys(Main::getInstance()->getConfig()->getAll());
                         $sender->sendMessage(TextFormat::GREEN . "[AreaEffects]Areas:\n" . TextFormat::GREEN . " - " . TextFormat::AQUA . implode("\n" . TextFormat::GREEN . " - " . TextFormat::AQUA, $all));
                         return true;
                         break;
@@ -121,42 +106,32 @@ class Main extends PluginBase implements Listener
         return false;
     }
 
-    public function isEffect($effect)
-    {
-        if (!is_numeric($effect)) {
-            $id = Effect::getEffectByName($effect);
-        } else {
-            $id = Effect::getEffect($effect);
-        }
-        return is_null($id) ? null : $id->getId();
-    }
-
     public function onMove(PlayerMoveEvent $event)
     {
         $player = $event->getPlayer();
-        foreach (array_keys($this->getConfig()->getAll()) as $areaname) {
+        foreach (array_keys(Main::getInstance()->getConfig()->getAll()) as $areaname) {
             if ($this->isInArea($player, $areaname)) {
-                $this->giveEffect($player, $areaname);
+                Main::getInstance()->giveEffect($player, $areaname);
             }
         }
     }
 
     public function isInArea(Player $player, $areaname)
     {
-        if (!$this->getConfig()->exists($areaname)) {
-            $this->getConfig()->reload();
+        if (!Main::getInstance()->getConfig()->exists($areaname)) {
+            Main::getInstance()->getConfig()->reload();
             return false;
         }
-        $area = $this->getConfig()->getNested($areaname);
+        $area = Main::getInstance()->getConfig()->getNested($areaname);
         if (($player->getLevel()->getName() == $area['level']) and ($player->getFloorX() <= max($area['pos1']['x'], $area['pos2']['x'])) and ($player->getFloorX() >= min($area['pos1']['x'], $area['pos2']['x'])) and ($player->getFloorY() <= max($area['pos1']['y'], $area['pos2']['y'])) and ($player->getFloorY() >= min($area['pos1']['y'], $area['pos2']['y'])) and ($player->getFloorZ() <= max($area['pos1']['z'], $area['pos2']['z'])) and ($player->getFloorZ() >= min($area['pos1']['z'], $area['pos2']['z']))) {
-            if (is_null($this->isEffect($area['effect']['id']))) {
-                $this->getConfig()->remove($areaname);
+            if (is_null(Main::getInstance()->isEffect($area['effect']['id']))) {
+                Main::getInstance()->getConfig()->remove($areaname);
                 $message = TextFormat::YELLOW . "[AreaEffects]Invalid effect found, removed area " . TextFormat::GRAY . $areaname;
-                foreach ($this->getServer()->getOps() as $opname) {
-                    $op = $this->getServer()->getPlayer($opname);
+                foreach (Server::getInstance()->getOps() as $opname) {
+                    $op = Server::getInstance()->getPlayer($opname);
                     if ($op instanceof Player && $op->isOnline()) $op->sendMessage($message);
                 }
-                $this->getLogger()->warning($message);
+                Main::getInstance()->getLogger()->warning($message);
                 return false;
             } else {
                 return true;
@@ -165,14 +140,4 @@ class Main extends PluginBase implements Listener
         return false;
     }
 
-    public function giveEffect(Player $player, $areaname)
-    {
-        $area = $this->getConfig()->getNested($areaname);
-        $id = $this->isEffect($area['effect']['id']);
-        if (!is_null($id)) {
-            $effectInstance = new EffectInstance(Effect::getEffect($id), $area['effect']['duration'], $area['effect']['amplifier'], $area['effect']['show']);
-            $player->removeEffect($id);
-            $player->addEffect($effectInstance);
-        }
-    }
 }
