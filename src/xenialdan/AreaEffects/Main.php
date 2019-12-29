@@ -22,7 +22,7 @@ class Main extends PluginBase implements Listener
         return self::$instance;
     }
 
-    protected function onLoad()
+    public function onLoad()
     {
         self::$instance = $this;
     }
